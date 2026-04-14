@@ -26,7 +26,7 @@ class SessionService:
         self._sessions[channel_id] = session
         return session
     
-    def get_session(self, channel_id: int) -> Optional[sessionInfo]:
+    def get_session(self, channel_id: int) -> Optional[SessionInfo]:
         """指定チャンネルのセッションを取得する。"""
         return self._sessions.get(channel_id)
     

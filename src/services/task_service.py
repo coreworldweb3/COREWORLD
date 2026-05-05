@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from pathlib import Path
+import sqlite3
+from typing import List, Optional
 
 
 @dataclass
@@ -17,14 +19,15 @@ class TaskInfo:
 
 
 class TaskService:
-    """タスク情報を簡易的に管理するサービス。"""
+    """SQLiteでタスク情報を管理するサービス。"""
 
     VALID_PRIORITIES = {"low", "middle", "high"}
     VALID_STATUSES = {"todo", "doing", "waiting", "done", "archived"}
 
-    def __init__(self) -> None:
-        self._tasks_by_channel: Dict[int, List[TaskInfo]] = {}
-        self._sequence: int = 1
+    def __init__(self, db_path: str = "data/coreworld.db") -> None:
+        self.db_path = Path(db_path)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._initialize_database()
 
     def add_task(
         self,
@@ -36,9 +39,37 @@ class TaskService:
         priority: str = "middle",
     ) -> TaskInfo:
         normalized_priority = self._normalize_priority(priority)
+        created_at = datetime.now()
 
-        task = TaskInfo(
-            task_id=self._sequence,
+        with self._get_connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO tasks (
+                    channel_id,
+                    created_by,
+                    title,
+                    description,
+                    assignee,
+                    priority,
+                    status,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    channel_id,
+                    created_by,
+                    title.strip(),
+                    description.strip(),
+                    assignee.strip() if assignee else None,
+                    normalized_priority,
+                    "todo",
+                    created_at.isoformat(),
+                ),
+            )
+            task_id = cursor.lastrowid
+
+        return TaskInfo(
+            task_id=task_id,
             channel_id=channel_id,
             created_by=created_by,
             title=title.strip(),
@@ -46,33 +77,59 @@ class TaskService:
             assignee=assignee.strip() if assignee else None,
             priority=normalized_priority,
             status="todo",
-            created_at=datetime.now(),
+            created_at=created_at,
         )
 
-        if channel_id not in self._tasks_by_channel:
-            self._tasks_by_channel[channel_id] = []
-
-        self._tasks_by_channel[channel_id].append(task)
-        self._sequence += 1
-        return task
-
     def list_tasks(self, channel_id: int) -> List[TaskInfo]:
-        return list(self._tasks_by_channel.get(channel_id, []))
+        with self._get_connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    task_id,
+                    channel_id,
+                    created_by,
+                    title,
+                    description,
+                    assignee,
+                    priority,
+                    status,
+                    created_at
+                FROM tasks
+                WHERE channel_id = ?
+                ORDER BY task_id ASC
+                """,
+                (channel_id,),
+            ).fetchall()
+
+        return [self._row_to_task(row) for row in rows]
 
     def find_task(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
-        tasks = self._tasks_by_channel.get(channel_id, [])
-        for task in tasks:
-            if task.task_id == task_id:
-                return task
-        return None
+        with self._get_connection() as connection:
+            row = connection.execute(
+                """
+                SELECT
+                    task_id,
+                    channel_id,
+                    created_by,
+                    title,
+                    description,
+                    assignee,
+                    priority,
+                    status,
+                    created_at
+                FROM tasks
+                WHERE channel_id = ? AND task_id = ?
+                """,
+                (channel_id, task_id),
+            ).fetchone()
 
-    def mark_done(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
-        task = self.find_task(channel_id, task_id)
-        if task is None:
+        if row is None:
             return None
 
-        task.status = "done"
-        return task
+        return self._row_to_task(row)
+
+    def mark_done(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
+        return self.move_task(channel_id, task_id, "done")
 
     def move_task(
         self,
@@ -80,27 +137,74 @@ class TaskService:
         task_id: int,
         new_status: str,
     ) -> Optional[TaskInfo]:
+        normalized_status = self._normalize_status(new_status)
+
+        with self._get_connection() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE tasks
+                SET status = ?
+                WHERE channel_id = ? AND task_id = ?
+                """,
+                (normalized_status, channel_id, task_id),
+            )
+
+            if cursor.rowcount == 0:
+                return None
+
+        return self.find_task(channel_id, task_id)
+
+    def delete_task(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
         task = self.find_task(channel_id, task_id)
         if task is None:
             return None
 
-        normalized_status = self._normalize_status(new_status)
-        task.status = normalized_status
+        with self._get_connection() as connection:
+            connection.execute(
+                """
+                DELETE FROM tasks
+                WHERE channel_id = ? AND task_id = ?
+                """,
+                (channel_id, task_id),
+            )
+
         return task
 
-    def delete_task(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
-        tasks = self._tasks_by_channel.get(channel_id, [])
+    def _initialize_database(self) -> None:
+        with self._get_connection() as connection:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS tasks (
+                    task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    channel_id INTEGER NOT NULL,
+                    created_by INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    assignee TEXT,
+                    priority TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
 
-        for index, task in enumerate(tasks):
-            if task.task_id == task_id:
-                removed_task = tasks.pop(index)
+    def _get_connection(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.db_path)
+        connection.row_factory = sqlite3.Row
+        return connection
 
-                if not tasks:
-                    del self._tasks_by_channel[channel_id]
-
-                return removed_task
-
-        return None
+    def _row_to_task(self, row: sqlite3.Row) -> TaskInfo:
+        return TaskInfo(
+            task_id=row["task_id"],
+            channel_id=row["channel_id"],
+            created_by=row["created_by"],
+            title=row["title"],
+            description=row["description"],
+            assignee=row["assignee"],
+            priority=row["priority"],
+            status=row["status"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+        )
 
     def _normalize_priority(self, priority: str) -> str:
         value = priority.strip().lower()

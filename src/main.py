@@ -9,6 +9,7 @@ from commands.summary_today import setup_summary_today_command
 from commands.task_add import setup_task_add_command
 from commands.task_done import setup_task_done_command
 from commands.task_list import setup_task_list_command
+from commands.task_move import setup_task_move_command
 from services.session_service import SessionService
 from services.summary_service import SummaryService
 from services.task_service import TaskService
@@ -44,6 +45,7 @@ class CoreWorldBot(discord.Client):
         setup_task_add_command(self.tree, self.task_service)
         setup_task_list_command(self.tree, self.task_service)
         setup_task_done_command(self.tree, self.task_service)
+        setup_task_move_command(self.tree, self.task_service)
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))
         self.tree.copy_global_to(guild=guild)

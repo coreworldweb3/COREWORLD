@@ -19,6 +19,9 @@ class TaskInfo:
 class TaskService:
     """タスク情報を簡易的に管理するサービス。"""
 
+    VALID_PRIORITIES = {"low", "middle", "high"}
+    VALID_STATUSES = {"todo", "doing", "waiting", "done", "archived"}
+
     def __init__(self) -> None:
         self._tasks_by_channel: Dict[int, List[TaskInfo]] = {}
         self._sequence: int = 1
@@ -71,10 +74,32 @@ class TaskService:
         task.status = "done"
         return task
 
+    def move_task(
+        self,
+        channel_id: int,
+        task_id: int,
+        new_status: str,
+    ) -> Optional[TaskInfo]:
+        task = self.find_task(channel_id, task_id)
+        if task is None:
+            return None
+
+        normalized_status = self._normalize_status(new_status)
+        task.status = normalized_status
+        return task
+
     def _normalize_priority(self, priority: str) -> str:
         value = priority.strip().lower()
 
-        if value in {"low", "middle", "high"}:
+        if value in self.VALID_PRIORITIES:
             return value
 
         return "middle"
+
+    def _normalize_status(self, status: str) -> str:
+        value = status.strip().lower()
+
+        if value in self.VALID_STATUSES:
+            return value
+
+        return "todo"

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from commands.session_open import setup_session_open_command
 from commands.summary_today import setup_summary_today_command
 from commands.task_add import setup_task_add_command
+from commands.task_delete import setup_task_delete_command
 from commands.task_done import setup_task_done_command
 from commands.task_list import setup_task_list_command
 from commands.task_move import setup_task_move_command
@@ -46,6 +47,7 @@ class CoreWorldBot(discord.Client):
         setup_task_list_command(self.tree, self.task_service)
         setup_task_done_command(self.tree, self.task_service)
         setup_task_move_command(self.tree, self.task_service)
+        setup_task_delete_command(self.tree, self.task_service)
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))
         self.tree.copy_global_to(guild=guild)

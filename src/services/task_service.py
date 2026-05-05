@@ -88,6 +88,20 @@ class TaskService:
         task.status = normalized_status
         return task
 
+    def delete_task(self, channel_id: int, task_id: int) -> Optional[TaskInfo]:
+        tasks = self._tasks_by_channel.get(channel_id, [])
+
+        for index, task in enumerate(tasks):
+            if task.task_id == task_id:
+                removed_task = tasks.pop(index)
+
+                if not tasks:
+                    del self._tasks_by_channel[channel_id]
+
+                return removed_task
+
+        return None
+
     def _normalize_priority(self, priority: str) -> str:
         value = priority.strip().lower()
 

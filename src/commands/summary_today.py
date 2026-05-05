@@ -3,11 +3,12 @@ from discord import app_commands
 
 from services.summary_service import SummaryService
 
+
 def setup_summary_today_command(
-        tree: app_commands.CommandTree,
-        summary_service: SummaryService,
+    tree: app_commands.CommandTree,
+    summary_service: SummaryService,
 ) -> None:
-    @tree.command(name="summary-today", description="現在のチャンネルの直近メッセージを簡易表示します。")
+    @tree.command(name="summary-today", description="現在のチャンネルの直近メッセージを要約します。")
     async def summary_today(interaction: discord.Interaction) -> None:
         channel = interaction.channel
 
@@ -17,13 +18,14 @@ def setup_summary_today_command(
                 ephemeral=True,
             )
             return
-        if not isinstance(channel, discord.TextChannel | discord.Thread):
+
+        if not isinstance(channel, (discord.TextChannel, discord.Thread)):
             await interaction.response.send_message(
                 "このコマンドはテキストチャンネルまたはスレッドでのみ使えます。",
                 ephemeral=True,
             )
             return
-        
+
         await interaction.response.defer(thinking=True)
 
         try:
@@ -38,11 +40,10 @@ def setup_summary_today_command(
                 ephemeral=True,
             )
             return
-        
+
         summary_text = summary_service.build_recent_summary(messages)
 
-        #Discordの1メッセージ制限対策
         if len(summary_text) > 1900:
-            summary_text = summary_text[:1900] + "\n... (省略) "
+            summary_text = summary_text[:1900] + "\n...（省略）"
 
         await interaction.followup.send(summary_text, ephemeral=False)

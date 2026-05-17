@@ -12,6 +12,7 @@ from commands.task_done import setup_task_done_command
 from commands.task_list import setup_task_list_command
 from commands.task_move import setup_task_move_command
 from commands.trello_add import setup_trello_add_command
+from commands.trello_move import setup_trello_move_command
 from connectors.trello_connector import TrelloConnector
 from services.session_service import SessionService
 from services.summary_service import SummaryService
@@ -52,6 +53,7 @@ class CoreWorldBot(discord.Client):
         setup_task_move_command(self.tree, self.task_service)
         setup_task_delete_command(self.tree, self.task_service)
         setup_trello_add_command(self.tree, self.trello_connector)
+        setup_trello_move_command(self.tree, self.trello_connector)
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))
         self.tree.copy_global_to(guild=guild)

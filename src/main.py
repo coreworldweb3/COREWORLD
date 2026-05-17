@@ -11,6 +11,8 @@ from commands.task_delete import setup_task_delete_command
 from commands.task_done import setup_task_done_command
 from commands.task_list import setup_task_list_command
 from commands.task_move import setup_task_move_command
+from commands.trello_add import setup_trello_add_command
+from connectors.trello_connector import TrelloConnector
 from services.session_service import SessionService
 from services.summary_service import SummaryService
 from services.task_service import TaskService
@@ -39,6 +41,7 @@ class CoreWorldBot(discord.Client):
         self.session_service = SessionService()
         self.summary_service = SummaryService()
         self.task_service = TaskService()
+        self.trello_connector = TrelloConnector()
 
     async def setup_hook(self) -> None:
         setup_session_open_command(self.tree, self.session_service)
@@ -48,6 +51,7 @@ class CoreWorldBot(discord.Client):
         setup_task_done_command(self.tree, self.task_service)
         setup_task_move_command(self.tree, self.task_service)
         setup_task_delete_command(self.tree, self.task_service)
+        setup_trello_add_command(self.tree, self.trello_connector)
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))
         self.tree.copy_global_to(guild=guild)

@@ -61,3 +61,29 @@
 ・将棋を「遊び入口」にできた 
 ・子供導線が成立した 
 ・CORE WORLDの空気感を作れた
+
+■ 写真記録
+
+### 写真1
+![わんぱく相撲イベント写真1](../../assets/images/wanpaku-sumo-2026-05/photo01.jpg)
+
+### 写真2
+![わんぱく相撲イベント写真2](../../assets/images/wanpaku-sumo-2026-05/photo02.jpg)
+
+### 写真3
+![わんぱく相撲イベント写真3](../../assets/images/wanpaku-sumo-2026-05/photo03.jpg)
+
+### 写真4
+![わんぱく相撲イベント写真4](../../assets/images/wanpaku-sumo-2026-05/photo04.jpg)
+
+### 写真5
+![わんぱく相撲イベント写真5](../../assets/images/wanpaku-sumo-2026-05/photo05.jpg)
+
+### 写真6
+![わんぱく相撲イベント写真6](../../assets/images/wanpaku-sumo-2026-05/photo06.jpg)
+
+### 写真7
+![わんぱく相撲イベント写真7](../../assets/images/wanpaku-sumo-2026-05/photo07.jpg)
+
+### 写真8
+![わんぱく相撲イベント写真8](../../assets/images/wanpaku-sumo-2026-05/photo08.jpg)

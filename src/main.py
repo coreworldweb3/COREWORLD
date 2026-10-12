@@ -14,6 +14,7 @@ from commands.task_move import setup_task_move_command
 from commands.trello_add import setup_trello_add_command
 from commands.trello_move import setup_trello_move_command
 from commands.trello_comment import setup_trello_comment_command
+from commands.notion_course import CourseStartView, setup_notion_course_command
 from connectors.trello_connector import TrelloConnector
 from services.session_service import SessionService
 from services.summary_service import SummaryService
@@ -56,6 +57,8 @@ class CoreWorldBot(discord.Client):
         setup_trello_add_command(self.tree, self.trello_connector)
         setup_trello_move_command(self.tree, self.trello_connector)
         setup_trello_comment_command(self.tree, self.trello_connector)
+        setup_notion_course_command(self.tree)
+        self.add_view(CourseStartView())
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))
         self.tree.copy_global_to(guild=guild)
@@ -67,5 +70,6 @@ class CoreWorldBot(discord.Client):
         print(f"ログイン成功: {self.user}")
 
 
-bot = CoreWorldBot()
-bot.run(DISCORD_BOT_TOKEN)
+if __name__ == "__main__":
+    bot = CoreWorldBot()
+    bot.run(DISCORD_BOT_TOKEN)

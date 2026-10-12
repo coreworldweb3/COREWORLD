@@ -92,6 +92,42 @@ class TrelloConnector:
             raise RuntimeError(
                 f"Trello API エラー: status={exc.code}, body={error_body}"
             ) from exc
+        
+    def add_comment(self, card_id: str, comment: str) -> dict[str, Any]:
+        if not self.api_key:
+            raise RuntimeError("TRELLO_API_KEY が .env に設定されていません。")
+        
+        if not self.token:
+            raise RuntimeError("TRELLO_TOKEN が .env に設定されていません。")
+        
+        if not comment.strip():
+            raise RuntimeError("コメント本文が空です。")
+        
+        params = parse.urlencode(
+            {
+                "key": self.api_key,
+                "token": self.token,
+                "text": comment.strip(),
+            }
+        )
+
+        req = request.Request(
+            url=f"https://api.trello.com/1/cards/{card_id}/actions/comments?{params}",
+            method="POST",
+            headers={
+                "Accept": "application/json",
+            },
+        )
+
+        try:
+            with request.urlopen(req) as response:
+                response_body = response.read().decode("utf-8")
+                return json.loads(response_body)
+        except error.HTTPError as exc:
+            error_body = exc.read().decode("utf-8", errors="ignore")
+            raise RuntimeError(
+                f"Trello API エラー: status={exc.code}, body={error_body}"
+            ) from exc
 
     def _get_target_list_id(self, target_status: str) -> str | None:
         value = target_status.strip().lower()

@@ -19,7 +19,8 @@ from connectors.trello_connector import TrelloConnector
 from services.session_service import SessionService
 from services.summary_service import SummaryService
 from services.task_service import TaskService
-
+from commands.request_submit import setup_request_submit_command
+from services.request_service import RequestService
 
 load_dotenv()
 
@@ -45,6 +46,7 @@ class CoreWorldBot(discord.Client):
         self.summary_service = SummaryService()
         self.task_service = TaskService()
         self.trello_connector = TrelloConnector()
+        self.request_service = RequestService()
 
     async def setup_hook(self) -> None:
         setup_session_open_command(self.tree, self.session_service)
@@ -58,6 +60,7 @@ class CoreWorldBot(discord.Client):
         setup_trello_move_command(self.tree, self.trello_connector)
         setup_trello_comment_command(self.tree, self.trello_connector)
         setup_notion_course_command(self.tree)
+        setup_request_submit_command(self.tree, self.request_service)
         self.add_view(CourseStartView())
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))

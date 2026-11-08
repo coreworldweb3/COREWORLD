@@ -1,9 +1,13 @@
+
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parents[2] / "date" / "coreworld.db"
+
+# SQLiteの正式な保存先
+DB_PATH = Path(__file__).resolve().parents[2] / "data" / "coreworld.db"
+
 
 class RequestService:
     def __init__(self) -> None:
@@ -12,7 +16,8 @@ class RequestService:
 
     def _initialize_database(self) -> None:
         with closing(sqlite3.connect(DB_PATH)) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS requests (
                     request_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     source_type TEXT NOT NULL,
@@ -24,18 +29,20 @@ class RequestService:
                     status TEXT NOT NULL DEFAULT 'received',
                     created_at TEXT NOT NULL
                 )
-            """)
+                """
+            )
             conn.commit()
 
     def create_request(
-            self,
-            *,
-            requester_id: int,
-            source_channel_id: int,
-            source_guild_id: int | None,
-            request_text: str,
+        self,
+        *,
+        requester_id: int,
+        source_channel_id: int,
+        source_guild_id: int | None,
+        request_text: str,
     ) -> int:
-        
+        """新しい依頼をSQLiteに保存する。"""
+
         content = request_text.strip()
 
         if not content:
@@ -61,7 +68,8 @@ class RequestService:
                 """,
                 (
                     "slash",
-                    str(source_guild_id) if source_guild_id else None,
+                    str(source_guild_id)
+                    if source_guild_id is not None else None,
                     str(source_channel_id),
                     str(requester_id),
                     content,
@@ -72,3 +80,65 @@ class RequestService:
 
             conn.commit()
             return cursor.lastrowid
+
+    def get_request(
+        self,
+        *,
+        request_id: int,
+        requester_id: int,
+    ) -> dict | None:
+        """受付番号から本人の依頼を取得する。"""
+
+        with closing(sqlite3.connect(DB_PATH)) as conn:
+            conn.row_factory = sqlite3.Row
+
+            row = conn.execute(
+                """
+                SELECT
+                    request_id,
+                    requester_id,
+                    request_text,
+                    status,
+                    source_type,
+                    created_at
+                FROM requests
+                WHERE request_id = ?
+                  AND requester_id = ?
+                """,
+                (request_id, str(requester_id)),
+            ).fetchone()
+
+            return dict(row) if row is not None else None
+
+    def list_requests(
+        self,
+        *,
+        requester_id: int,
+        limit: int = 10,
+    ) -> list[dict]:
+        """本人の依頼を新しい順に一覧取得する。"""
+
+        if not 1 <= limit <= 20:
+            raise ValueError(
+                "取得件数は1～20で指定してください。"
+            )
+
+        with closing(sqlite3.connect(DB_PATH)) as conn:
+            conn.row_factory = sqlite3.Row
+
+            rows = conn.execute(
+                """
+                SELECT
+                    request_id,
+                    request_text,
+                    status,
+                    created_at
+                FROM requests
+                WHERE requester_id = ?
+                ORDER BY request_id DESC
+                LIMIT ?
+                """,
+                (str(requester_id), limit),
+            ).fetchall()
+
+            return [dict(row) for row in rows]

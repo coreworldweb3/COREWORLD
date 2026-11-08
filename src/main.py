@@ -20,6 +20,8 @@ from services.session_service import SessionService
 from services.summary_service import SummaryService
 from services.task_service import TaskService
 from commands.request_submit import setup_request_submit_command
+from commands.request_status import setup_request_status_command
+from commands.request_list import setup_request_list_command
 from services.request_service import RequestService
 
 load_dotenv()
@@ -61,6 +63,8 @@ class CoreWorldBot(discord.Client):
         setup_trello_comment_command(self.tree, self.trello_connector)
         setup_notion_course_command(self.tree)
         setup_request_submit_command(self.tree, self.request_service)
+        setup_request_status_command(self.tree, self.request_service)
+        setup_request_list_command(self.tree, self.request_service)
         self.add_view(CourseStartView())
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))

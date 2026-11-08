@@ -67,7 +67,7 @@ request_service: RequestService,
 
         label = labels.get(result.category, result.category)
         service = result.target_service or "未特定"
-        approval = "必要" if result.requires_approval else "未判定・不要候補"
+        approval = "要承認候補" if result.requires_approval else "未判定"
 
         await interaction.response.send_message(
             (

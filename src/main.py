@@ -22,6 +22,7 @@ from services.task_service import TaskService
 from commands.request_submit import setup_request_submit_command
 from commands.request_status import setup_request_status_command
 from commands.request_list import setup_request_list_command
+from commands.request_classify import setup_request_classify_command
 from services.request_service import RequestService
 
 load_dotenv()
@@ -65,6 +66,7 @@ class CoreWorldBot(discord.Client):
         setup_request_submit_command(self.tree, self.request_service)
         setup_request_status_command(self.tree, self.request_service)
         setup_request_list_command(self.tree, self.request_service)
+        setup_request_classify_command(self.tree, self.request_service)
         self.add_view(CourseStartView())
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))

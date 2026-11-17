@@ -130,7 +130,23 @@ class InteractionTests(unittest.IsolatedAsyncioTestCase):
             bot = main.CoreWorldBot()
         with patch.object(bot.tree, "sync", new=AsyncMock(return_value=[])), patch.object(bot, "add_view") as add_view:
             await bot.setup_hook()
-        expected = {"session-open", "summary-today", "task-add", "task-list", "task-done", "task-move", "task-delete", "trello-add", "trello-move", "trello-comment", "notion-course"}
+        expected = {"session-open", 
+                    "summary-today", 
+                    "task-add", 
+                    "task-list", 
+                    "task-done", 
+                    "task-move", 
+                    "task-delete", 
+                    "trello-add", 
+                    "trello-move", 
+                    "trello-comment", 
+                    "notion-course",
+                    "request-submit",
+                    "request-status",
+                    "request-list",
+                    "request-classify",
+                    "request-approval-request",
+                    "request-review",}
         self.assertEqual({command.name for command in bot.tree.get_commands()}, expected)
         self.assertEqual({command.name for command in bot.tree.get_commands(guild=discord.Object(id=1))}, expected)
         self.assertTrue(add_view.call_args.args[0].is_persistent())

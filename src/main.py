@@ -3,6 +3,7 @@ import os
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
+from pathlib import Path
 
 from commands.session_open import setup_session_open_command
 from commands.summary_today import setup_summary_today_command
@@ -23,9 +24,16 @@ from commands.request_submit import setup_request_submit_command
 from commands.request_status import setup_request_status_command
 from commands.request_list import setup_request_list_command
 from commands.request_classify import setup_request_classify_command
+from commands.request_workflow import setup_request_workflow_commands
+from services.request_workflow_service import RequestWorkflowService
 from services.request_service import RequestService
 
-load_dotenv()
+ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
+
+load_dotenv(
+    dotenv_path=ENV_PATH,
+    override=True,
+)
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 DISCORD_GUILD_ID = os.getenv("DISCORD_GUILD_ID")
@@ -51,6 +59,22 @@ class CoreWorldBot(discord.Client):
         self.trello_connector = TrelloConnector()
         self.request_service = RequestService()
 
+        approver_ids = {
+            int(value.strip())
+            for value in os.getenv("REQUEST_APPROVER_IDS", "").split(",")
+            if value.strip().isdigit()
+        }
+
+        self.workflow_service = RequestWorkflowService(
+            db_path=self.request_service.db_path,
+            approver_ids=approver_ids,
+        )
+
+        print(
+            "[DEBUG] 承認担当者登録数:",
+            len(self.workflow_service.approver_ids),
+        )
+
     async def setup_hook(self) -> None:
         setup_session_open_command(self.tree, self.session_service)
         setup_summary_today_command(self.tree, self.summary_service)
@@ -67,6 +91,7 @@ class CoreWorldBot(discord.Client):
         setup_request_status_command(self.tree, self.request_service)
         setup_request_list_command(self.tree, self.request_service)
         setup_request_classify_command(self.tree, self.request_service)
+        setup_request_workflow_commands(self.tree, self.workflow_service)
         self.add_view(CourseStartView())
 
         guild = discord.Object(id=int(DISCORD_GUILD_ID))

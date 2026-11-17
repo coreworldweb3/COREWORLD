@@ -10,10 +10,10 @@ sys.path.insert(
     str(Path(__file__).resolve().parents[1] / "src"),
 )
 
-from services.request_classifier import RequestClassigier
+from services.request_classifier import RequestClassifier
 from services.request_service import RequestService
 
-class TestRequestWorkflow(unittest.TescCase):
+class TestRequestWorkflow(unittest.TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -40,7 +40,7 @@ class TestRequestWorkflow(unittest.TescCase):
             "Googleカレンダーに予定を登録して"
         )
 
-        saved = self.sercice.save_classification(
+        saved = self.service.save_classification(
             request_id=request_id,
             requester_id=100,
             classification=result,
@@ -75,7 +75,7 @@ class TestRequestWorkflow(unittest.TescCase):
 
         record = self.service.get_request(
             request_id=request_id,
-            requster_id=100,
+            requester_id=100,
         )
 
         self.assertEqual(
@@ -98,7 +98,7 @@ class TestRequestWorkflow(unittest.TescCase):
             requester_id=100,
         )
 
-        self.assetEqual(
+        self.assertEqual(
             record["status"],
             "manual_required",
         )
@@ -116,7 +116,7 @@ class TestRequestWorkflow(unittest.TescCase):
 
         second = self.service.save_classification(
             request_id=request_id,
-            requseter_id=100,
+            requester_id=100,
             classification=result,
         )
 
@@ -147,7 +147,6 @@ class TestRequestWorkflow(unittest.TescCase):
 
         with closing(sqlite3.connect(legacy_path)) as conn:
             with conn:
-
                 conn.execute("""
                     CREATE TABLE requests(
                         request_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -166,20 +165,20 @@ class TestRequestWorkflow(unittest.TescCase):
                     INSERT INTO requests (
                         source_type,
                         source_channel_id,
-                        requseter_id,
+                        requester_id,
                         request_text,
                         status,
                         created_at
-                        )
-                        VALUES(?, ?, ?, ?, ?, ?)
-                    """, (
-                        "slash",
-                        "200",
-                        "100",
-                        "以前の依頼",
-                        "received",
-                        "2026-11-01T00:00:00+00:00",
-                    ))
+                    )
+                    VALUES(?, ?, ?, ?, ?, ?)
+                """, (
+                    "slash",
+                    "200",
+                    "100",
+                    "以前の依頼",
+                    "received",
+                    "2026-11-01T00:00:00+00:00",
+                ))
 
             migrated = RequestService(db_path=legacy_path)
 

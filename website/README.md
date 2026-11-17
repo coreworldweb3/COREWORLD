@@ -60,3 +60,15 @@ node scripts/serve.mjs
 - 共有用アイデア一覧（2026年9月）。CORE WORLDと明確に結びつく企画のみ採用。個人構想は除外。
 
 初期版の編集基準日：2026-11-17（日本時間）。
+
+## 公開準備の現在地
+
+ソースは `feature/core-world-website`、生成済み静的ファイルは `gh-pages` ブランチに保存済みです。GitHub Pagesの有効化はまだ完了していません。
+
+リポジトリ Settings → Pages で Source を `Deploy from a branch`、Branch を `gh-pages`、フォルダを `/(root)` に設定して Save します。
+
+公開先候補は `https://coreworldweb3.github.io/COREWORLD/` ですが、公開設定とデプロイ成功を確認するまでは稼働URLとして案内しません。
+
+更新時はソースから再ビルドし、`dist/` の全ファイルを `gh-pages` のルートへ同期します（`.nojekyll` を維持）。現時点で自動同期は未設定です。
+
+別途作成したSitesのサイトIDは `.openai/hosting.json` に保持していますが、実行環境から配信先へのDNS解決ができず、未デプロイです。新しいサイトを再作成せず、このIDを使って再開してください。
